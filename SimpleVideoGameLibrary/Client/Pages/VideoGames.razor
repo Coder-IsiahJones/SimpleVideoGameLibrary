@@ -1,6 +1,8 @@
 ﻿@page "/videogames"
-@inject HttpClient Http
-<h3>VideoGames</h3>
+@inject HttpClient Http;
+@inject NavigationManager NavigationManager;
+
+<h3>Video Games</h3>
 
 @if (games.Count <= 0)
 {
@@ -8,12 +10,17 @@
 }
 else
 {
- <ul>
-     @foreach (var game in games)
-    {
-        <li>@game.Title - @game.Publisher - @game.ReleaseYear</li>
-    }
- </ul>   
+    <button class="btn btn-primary mb-3" @onclick="AddVideoGame">Add Video Game</button>
+
+    <QuickGrid Items="games.AsQueryable()">
+        <PropertyColumn Title="Title" Property="game => game.Title" />
+        <PropertyColumn Title="Publisher" Property="game => game.Publisher" />
+        <PropertyColumn Title="ReleaseYear" Property="game => game.ReleaseYear" />
+            <TemplateColumn>
+                <button class="btn btn-primary mb-3" @onclick="() => EditVideoGame(context.Id)">Edit</button>
+                <button class="btn btn-danger mb-3" @onclick="() => DeleteVideoGame(context.Id)">Delete</button>
+            </TemplateColumn>
+    </QuickGrid> 
 }
 
 @code {
@@ -26,6 +33,36 @@ else
         if (result != null)
         {
             games = result;
+        }
+    }
+
+    void AddVideoGame()
+    {
+        NavigationManager.NavigateTo("/videogame");
+    }
+
+    void EditVideoGame(int id)
+    {
+        NavigationManager.NavigateTo($"/videogame/{id}");
+    }
+
+    async Task DeleteVideoGame(int id)
+    {
+        var result = await Http.DeleteFromJsonAsync<VideoGame>($"api/videogame/{id}");
+
+        if (result != null)
+        {
+            RemoveGameFromList(id);
+        }
+    }
+
+    void RemoveGameFromList(int id)
+    {
+        var deletedGame = games.FirstOrDefault(game => game.Id == id);
+        if (deletedGame != null)
+        {
+            games.Remove(deletedGame);
+            StateHasChanged();
         }
     }
 }
